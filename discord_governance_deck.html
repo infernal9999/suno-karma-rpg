@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno Discord Karma RPG Governance System</title>
+    <style>
+        :root {
+            /* Premium Midnight Nebula Color Palette */
+            --bg-main: #09090B;
+            --bg-card: #18181B;
+            --bg-panel: #27272A;
+            --border-color: #3F3F46;
+            --border-highlight: #6366F1;
+            
+            --text-main: #FAFAFA;
+            --text-muted: #A1A1AA;
+            
+            /* System Color Coding Markers */
+            --color-safe: #10B981;    /* Emerald (Admin) */
+            --color-prov: #F59E0B;    /* Amber (Provisional) */
+            --color-risk: #EF4444;    /* Rose (Mod/Risk) */
+            --color-logic: #0EA5E9;   /* Cyan (Helper/Mentor) */
+            --color-accent: #8B5CF6;  /* Violet (Steward) */
+
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Responsive Viewport Setup */
+        #deck-viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            min-height: 80vh;
+            background-color: rgba(24, 24, 27, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            flex-direction: column;
+            justify-content: space-between;
+            transition: opacity 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .slide { padding: 48px; height: 780px; }
+        }
+
+        /* Premium Animation for Slide Transitions */
+        .slide.active { 
+            display: flex; 
+            animation: slideUpScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        }
+
+        @keyframes slideUpScale {
+            0% { opacity: 0; transform: translateY(20px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ----- SVG ANIMATION CLASSES ----- */
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        
+        .flow-line {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: drawLine 1s ease-out forwards;
+        }
+        
+        @keyframes pulseAlert {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        .alert-node {
+            transform-origin: center;
+            animation: pulseAlert 2s infinite ease-in-out;
+        }
+        
+        @keyframes radarGrow {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .radar-poly {
+            transform-origin: center;
+            animation: radarGrow 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: translateY(5px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .node-pop {
+            opacity: 0;
+            animation: popIn 0.5s ease forwards;
+        }
+
+        /* CSS Loader Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid var(--color-safe);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        /* Typography & Fluid Scaling */
+        h1 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.03em; line-height: 1.1; background: linear-gradient(to right, #FAFAFA, #A1A1AA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: clamp(1rem, 1.5vw, 1.2rem); font-weight: 600; color: var(--color-logic); margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.08em; }
+        h3 { font-size: clamp(1.1rem, 1.5vw, 1.35rem); font-weight: 600; color: #E4E4E7; margin-top: 16px; margin-bottom: 8px; }
+        p { color: var(--text-muted); font-size: clamp(0.95rem, 1.2vw, 1.05rem); line-height: 1.6; margin-bottom: 14px; }
+        
+        ul { list-style-position: inside; margin-bottom: 16px; }
+        li { color: var(--text-muted); font-size: clamp(0.95rem, 1.2vw, 1.05rem); line-height: 1.6; margin-bottom: 8px; }
+        strong { color: #E4E4E7; font-weight: 600; }
+        blockquote { border-left: 4px solid var(--color-accent); padding-left: 20px; margin: 20px 0; background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%); padding-top: 10px; padding-bottom: 10px; border-radius: 0 8px 8px 0; }
+
+        /* Responsive Layout Adaptive Grid */
+        .content-grid { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; width: 100%; }
+        @media (min-width: 850px) {
+            .content-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+            .full-width { grid-column: span 2; }
+        }
+
+        /* Anti-Distortion Dynamic Visual Asset Vectors */
+        .diagram-container {
+            background-color: rgba(9, 9, 11, 0.6);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-height: 240px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+        svg { width: 100%; max-width: 100%; height: auto; max-height: 350px; display: block; object-fit: contain; }
+
+        /* Responsive Table Configurations */
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 16px; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; min-width: 800px; }
+        th { background-color: var(--bg-panel); color: var(--text-main); font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--border-color); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background-color: rgba(39, 39, 42, 0.4); }
+        tr:hover td { background-color: rgba(99, 102, 241, 0.05); }
+
+        /* Badge Markers */
+        .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .badge-safe { background-color: rgba(16, 185, 129, 0.15); color: var(--color-safe); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-prov { background-color: rgba(245, 158, 11, 0.15); color: var(--color-prov); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-risk { background-color: rgba(239, 68, 68, 0.15); color: var(--color-risk); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-logic { background-color: rgba(14, 165, 233, 0.15); color: var(--color-logic); border: 1px solid rgba(14, 165, 233, 0.3); }
+        .badge-accent { background-color: rgba(139, 92, 246, 0.15); color: var(--color-accent); border: 1px solid rgba(139, 92, 246, 0.3); }
+
+        /* UI Console Engine Panels */
+        pre { background-color: #000000; border: 1px solid var(--border-color); font-family: var(--font-mono); padding: 20px; border-radius: 8px; color: var(--color-safe); overflow-x: auto; font-size: 0.85rem; line-height: 1.5; width: 100%; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        
+        .code-simulation {
+            position: relative; background-color: #000000; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 0.85rem; color: #A1A1AA;
+        }
+        .code-simulation button {
+            position: absolute; top: 12px; right: 12px; background: var(--color-accent); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; transition: background 0.2s; display: flex; align-items: center;
+        }
+        .code-simulation button:hover:not(:disabled) { background: #7C3AED; }
+        .code-simulation button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .log-output { margin-top: 10px; min-height: 120px; color: var(--color-safe); display: flex; flex-direction: column; gap: 4px; }
+        .log-entry { opacity: 0; animation: fadeInLog 0.3s forwards; }
+        
+        @keyframes fadeInLog {
+            from { opacity: 0; transform: translateX(-5px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Slide Footer */
+        .slide-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 24px; font-size: 0.85rem; color: var(--text-muted); width: 100%; }
+        
+        /* Upgraded Responsive Control Bar */
+        #controls-bar { 
+            background-color: rgba(9, 9, 11, 0.95); 
+            backdrop-filter: blur(10px); 
+            border-top: 1px solid var(--border-color); 
+            padding: 16px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-items: center;
+            gap: 12px; 
+            width: 100%; 
+            position: sticky; 
+            bottom: 0; 
+            z-index: 100; 
+        }
+        @media (min-width: 768px) {
+            #controls-bar { justify-content: space-between; padding: 16px 32px; flex-wrap: nowrap; }
+        }
+        
+        .control-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        
+        .btn { background-color: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .btn:hover { background-color: var(--border-highlight); color: #FFF; border-color: var(--border-highlight); box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+        .btn-play { background-color: var(--color-safe); border-color: var(--color-safe); color: #000; }
+        .btn-play:hover { background-color: #059669; border-color: #059669; color: #FFF; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        
+        /* Dynamic Slide Jump Select Menu */
+        .slide-select {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23A1A1AA%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px top 50%;
+            background-size: 10px auto;
+            padding-right: 32px;
+        }
+        .slide-select:hover, .slide-select:focus { border-color: var(--color-logic); }
+        
+        #progress-container { flex: 1; margin: 0 16px; height: 6px; background: var(--bg-panel); border-radius: 3px; overflow: hidden; display: none; width: 100%; order: -1; }
+        @media (min-width: 768px) { #progress-container { display: block; order: 0; width: auto; } }
+        #progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--color-logic), var(--color-accent)); transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+
+    <div id="deck-viewport">
+
+        <div class="slide active">
+            <div>
+                <h1>Suno Discord Karma RPG Governance System</h1>
+                <h2>Hardened V2+ System Architecture Blueprint</h2>
+                <div class="content-grid" style="margin-top: 32px;">
+                    <div>
+                        <p><strong>Transforming community moderation and reputation into a decentralized, multi-dimensional RPG-driven governance engine.</strong></p>
+                        <p style="margin-top: 24px;">
+                            <span class="badge badge-accent">Author</span> inf3rno (@Helper)<br><br>
+                            <span class="badge badge-logic">Target Audience</span> @Helper @Mentor @Steward @Moderator @Admin of Suno Discord<br><br>
+                            <span class="badge badge-prov">Design Aesthetic</span> Modern SaaS infrastructure style (Clean, data-dense)
+                        </p>
+                    </div>
+                    <pre>
+{
+  "system_status": "PILOT_CANDIDATE",
+  "build_v": "Hardened_V2_Prototype",
+  "verification_mode": "Graph_Enforced",
+  "validation_state": "Red_Team_Simulated",
+  "deployment_readiness": "Experimental",
+  "testing_phase": "Conceptual_Hardening_Complete",
+  "active_nodes": 14205,
+  "telemetry_encryption": "AES-256-GCM"
+}</pre>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Enterprise Trust &amp; Safety Design Deck</span>
+                <span>Slide 1 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Executive Summary &amp; Index</h1>
+                <h2>Core Agenda Overview</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>The Hardened V2+ framework replaces traditional subjective moderation and flat hierarchy systems with a multi-dimensional reputation vector engine.</p>
+                        <p>By blending user experience elements from role-playing games (RPGs) with rigorous graph theory, data normalization, and red-teamed adversarial mitigations, this system ensures scalable, self-organizing, and sybil-resistant community governance.</p>
+                    </div>
+                    <div>
+                        <ul style="font-size: 0.9rem;">
+                            <li><strong>Slides 03-05:</strong> The Suno Imperative &amp; Architecture Bootstrap</li>
+                            <li><strong>Slides 06-10:</strong> Operational Role Hierarchy &amp; Lifecycle Matrix</li>
+                            <li><strong>Slides 11-14:</strong> Multi-Dimensional Stat Engine Mechanics</li>
+                            <li><strong>Slides 15-18:</strong> Promotion Pipeline &amp; Transparency Layer</li>
+                            <li><strong>Slides 19-25:</strong> Implementation, Deployment &amp; Ops</li>
+                            <li><strong>Slides 26-29:</strong> Anti-Abuse, Security &amp; Privacy Infrastructure</li>
+                            <li><strong>Slides 30-34:</strong> Human Layer &amp; Red Team System Stress Test</li>
+                            <li><strong>Slides 35-40:</strong> Costs, Roadmap, Real-World Adoption &amp; Reality Check</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Architecture Blueprint Whitepaper</span>
+                <span>Slide 2 of 40</span>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div>
+                <h1>The Suno Imperative</h1>
+                <h2>Why We Need Automated Role Assignments</h2>
+                <div class="content-grid">
+                    <div>
+                        <p><strong>The Challenge of Hyper-Growth</strong><br>
+                        Suno's rapidly expanding Discord server is highly active but vulnerable to interaction farming, self-promotion loops, and subjective staff bottlenecks. Manual promotion fails to scale, leading to inconsistent role distribution.</p>
+                        <p><strong>The Automated Solution</strong><br>
+                        We require an objective mechanism to transform the community into a structured ecosystem where users progress through roles based on verified behavior, contributions, and trust signals.</p>
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.05); border: 1px solid var(--color-accent); padding: 24px; border-radius: 12px;">
+                        <h3 style="color: var(--color-accent); margin-top: 0;">The Final Assignment Engine</h3>
+                        <p>By abstracting progression into an algorithmic <strong>"Karma RPG,"</strong> we deploy a programmatic assignment engine capable of handling complex promotion, delay, and rejection logic instantly.</p>
+                        <ul style="margin-bottom: 0;">
+                            <li>Removes human bias from moderation</li>
+                            <li>Dismantles "Clout-Farming" Networks</li>
+                            <li>Incentivizes genuine community mentoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Context &amp; System Rationale</span>
+                <span>Slide 3 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Core Architecture Philosophy</h1>
+                <h2>Shifting from Moderation to Graph-Based Governance</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>Traditional systems look at actions in isolation, making them vulnerable to sybil attacks and manipulation. The V2+ template treats behavior as an ecosystem data grid.</p>
+                        <ul>
+                            <li><strong>The Core Thesis:</strong> Gamification without statistical validation leads to inflation, collusion, and collapse.</li>
+                            <li><strong>Behavioral Quantization:</strong> Actions write parameters directly onto the user's active Reputation Vector profile.</li>
+                            <li><strong>Separation of Powers:</strong> Automated validation pipelines prevent structural capture by single threat profiles or compromised administrators.</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 400 160" preserveAspectRatio="xMidYMid meet">
+                            <defs>
+                                <marker id="arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#0EA5E9"/>
+                                </marker>
+                                <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B"/>
+                                </marker>
+                                <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#EF4444"/>
+                                </marker>
+                            </defs>
+                            <g class="node-pop" style="animation-delay: 0.2s;">
+                                <rect x="10" y="60" width="75" height="40" rx="6" fill="#18181B" stroke="#0EA5E9" stroke-width="2"/>
+                                <text x="47" y="84" fill="#FAFAFA" font-size="10" text-anchor="middle" font-family="sans-serif">User Action</text>
+                            </g>
+                            <path d="M 85 80 L 115 80" stroke="#0EA5E9" stroke-width="2" marker-end="url(#arrow-cyan)" class="flow-line" style="animation-delay: 0.5s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 0.8s;">
+                                <rect x="125" y="60" width="75" height="40" rx="6" fill="#18181B" stroke="#F59E0B" stroke-width="2"/>
+                                <text x="162" y="84" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Semantic Check</text>
+                            </g>
+                            <path d="M 200 80 L 230 80" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrow-amber)" class="flow-line" style="animation-delay: 1.1s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 1.4s;">
+                                <rect x="240" y="60" width="65" height="40" rx="6" fill="#18181B" stroke="#EF4444" stroke-width="2"/>
+                                <text x="272" y="84" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Graph Filter</text>
+                            </g>
+                            <path d="M 305 80 L 335 80" stroke="#EF4444" stroke-width="2" marker-end="url(#arrow-red)" class="flow-line" style="animation-delay: 1.7s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 2.0s;">
+                                <rect x="340" y="60" width="50" height="40" rx="6" fill="#064E3B" stroke="#10B981" stroke-width="2"/>
+                                <text x="365" y="84" fill="#10B981" font-size="10" text-anchor="middle" font-weight="bold" font-family="sans-serif">Gate Pass</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 4 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Genesis Governance &amp; Bootstrap Strategy</h1>
+                <h2>Phased Rollout &amp; Ecosystem Seeding</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>A complex RPG system cannot launch fully automated. It requires a structured, multi-phase bootstrapping protocol to seed the initial trust graph safely.</p>
+                        
+                        <div style="background: rgba(16, 185, 129, 0.05); border-left: 3px solid var(--color-safe); padding: 12px; margin-bottom: 12px;">
+                            <strong style="color:var(--color-safe)">Phase 0: Admin Seed Layer</strong><br>
+                            <span style="font-size: 0.9rem; color: var(--text-muted)">Admins manually assign the foundational trust nodes: initial Helpers, Mentors, and baseline Moderators.</span>
+                        </div>
+                        <div style="background: rgba(14, 165, 233, 0.05); border-left: 3px solid var(--color-logic); padding: 12px; margin-bottom: 12px;">
+                            <strong style="color:var(--color-logic)">Phase 1: Silent Telemetry Mode</strong><br>
+                            <span style="font-size: 0.9rem; color: var(--text-muted)">System collects behavioral data and builds initial graphs. ZERO automated role execution occurs.</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="background: rgba(245, 158, 11, 0.05); border-left: 3px solid var(--color-prov); padding: 12px; margin-bottom: 12px;">
+                            <strong style="color:var(--color-prov)">Phase 2: Shadow Scoring</strong><br>
+                            <span style="font-size: 0.9rem; color: var(--text-muted)">Hidden scoring engines activate. Metrics are used strictly for backend calibration against human moderation actions.</span>
+                        </div>
+                        <div style="background: rgba(139, 92, 246, 0.05); border-left: 3px solid var(--color-accent); padding: 12px; margin-bottom: 12px;">
+                            <strong style="color:var(--color-accent)">Phase 3: Hybrid Governance</strong><br>
+                            <span style="font-size: 0.9rem; color: var(--text-muted)">Stats assist humans. Promotions remain explicitly human-controlled but require algorithmic endorsement.</span>
+                        </div>
+                        <div style="background: rgba(239, 68, 68, 0.05); border-left: 3px solid var(--color-risk); padding: 12px;">
+                            <strong style="color:var(--color-risk)">Phase 4: Mature Partial Decentralization</strong><br>
+                            <span style="font-size: 0.9rem; color: var(--text-muted)">Weighted governance and automated gating begins. Human oversight is retained strictly for edge-cases and emergency freezes.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 5 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Role Hierarchy Progression Path</h1>
+                <h2>The Progression Tree Map</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>User progression paths flow upward through strict functional checkpoints. Specialized sandboxes and quarantine layers isolate suspect nodes from core server logic maps.</p>
+                        <ul>
+                            <li>The <strong>@Steward</strong> layer acts as a crucial buffer between general mentorship and structural moderation.</li>
+                            <li>Auxiliary assignments let systems verify candidate performance securely under active production environments.</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 450 260" preserveAspectRatio="xMidYMid meet">
+                            <defs>
+                                <marker id="arrow-gray" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+                                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#3F3F46"/>
+                                </marker>
+                            </defs>
+                            
+                            <g class="node-pop" style="animation-delay: 0.1s;">
+                                <rect x="180" y="10" width="90" height="22" rx="4" fill="#18181B" stroke="#10B981" stroke-width="1.5"/>
+                                <text x="225" y="25" fill="#10B981" font-size="9" text-anchor="middle" font-weight="bold" font-family="sans-serif">Admin 🟢</text>
+                            </g>
+                            <path d="M 225 34 L 225 42" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 0.3s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 0.5s;">
+                                <rect x="180" y="45" width="90" height="22" rx="4" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                                <text x="225" y="60" fill="#EF4444" font-size="9" text-anchor="middle" font-weight="bold" font-family="sans-serif">Moderator 🔴</text>
+                            </g>
+                            <path d="M 270 56 L 300 56" stroke="#3F3F46" stroke-width="1.5" stroke-dasharray="2,2" class="flow-line" style="animation-delay: 0.7s;"/>
+                            <g class="node-pop" style="animation-delay: 0.9s;">
+                                <rect x="300" y="45" width="90" height="22" rx="4" fill="#18181B" stroke="#F59E0B" stroke-width="1.5"/>
+                                <text x="345" y="60" fill="#F59E0B" font-size="8" text-anchor="middle" font-family="sans-serif">Intern Mod 🟡</text>
+                            </g>
+                            <path d="M 225 69 L 225 77" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 1.1s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 1.3s;">
+                                <rect x="180" y="80" width="90" height="22" rx="4" fill="#18181B" stroke="#8B5CF6" stroke-width="1.5"/>
+                                <text x="225" y="95" fill="#8B5CF6" font-size="9" text-anchor="middle" font-weight="bold" font-family="sans-serif">Steward 🟣</text>
+                            </g>
+                            <path d="M 225 104 L 225 112" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 1.5s;"/>
+
+                            <g class="node-pop" style="animation-delay: 1.7s;">
+                                <rect x="180" y="115" width="90" height="22" rx="4" fill="#18181B" stroke="#0EA5E9" stroke-width="1.5"/>
+                                <text x="225" y="130" fill="#0EA5E9" font-size="9" text-anchor="middle" font-weight="bold" font-family="sans-serif">Mentor 🔵</text>
+                            </g>
+                            <path d="M 270 126 L 300 126" stroke="#3F3F46" stroke-width="1.5" stroke-dasharray="2,2" class="flow-line" style="animation-delay: 1.9s;"/>
+                            <g class="node-pop" style="animation-delay: 2.1s;">
+                                <rect x="300" y="115" width="90" height="22" rx="4" fill="#18181B" stroke="#0EA5E9" stroke-width="1.5"/>
+                                <text x="345" y="130" fill="#0EA5E9" font-size="8" text-anchor="middle" font-family="sans-serif">Observer Mentor</text>
+                            </g>
+                            <path d="M 225 139 L 225 147" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 2.3s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 2.5s;">
+                                <rect x="180" y="150" width="90" height="22" rx="4" fill="#18181B" stroke="#0EA5E9" stroke-width="1.5"/>
+                                <text x="225" y="165" fill="#0EA5E9" font-size="9" text-anchor="middle" font-family="sans-serif">Helper 🔵</text>
+                            </g>
+                            <path d="M 225 174 L 225 182" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 2.7s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 2.9s;">
+                                <rect x="180" y="185" width="90" height="22" rx="4" fill="#18181B" stroke="#F59E0B" stroke-width="1.5"/>
+                                <text x="225" y="200" fill="#F59E0B" font-size="8" text-anchor="middle" font-family="sans-serif">Provisional Helper</text>
+                            </g>
+                            <path d="M 270 196 L 300 196" stroke="#3F3F46" stroke-width="1.5" stroke-dasharray="2,2" class="flow-line" style="animation-delay: 3.1s;"/>
+                            <g class="node-pop" style="animation-delay: 3.3s;">
+                                <rect x="300" y="185" width="90" height="22" rx="4" fill="#18181B" stroke="#F59E0B" stroke-width="1.5"/>
+                                <text x="345" y="200" fill="#F59E0B" font-size="8" text-anchor="middle" font-family="sans-serif">Trial/Shadow 🟡</text>
+                            </g>
+                            <path d="M 225 209 L 225 217" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 3.5s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 3.7s;">
+                                <rect x="180" y="220" width="90" height="22" rx="4" fill="#18181B" stroke="#A1A1AA" stroke-width="1.5"/>
+                                <text x="225" y="235" fill="#A1A1AA" font-size="9" text-anchor="middle" font-family="sans-serif">User 🔵</text>
+                            </g>
+                            <path d="M 180 231 L 110 231" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="3,3" class="flow-line" style="animation-delay: 3.9s;"/>
+                            <g class="node-pop alert-node" style="animation-delay: 4.1s;">
+                                <rect x="20" y="220" width="90" height="22" rx="4" fill="#450a0a" stroke="#EF4444" stroke-width="1.5"/>
+                                <text x="65" y="235" fill="#EF4444" font-size="8" text-anchor="middle" font-family="sans-serif">Risk User 🔴</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 6 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Core Roles Specifications</h1>
+                <h2>Operational Definitions &amp; Lifecycles (Ranks 1-3)</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>User <span class="badge badge-logic">Rank 1</span></h3>
+                        <p>Baseline participant status. Granted uniformly upon clearing baseline server onboarding verification paths.</p>
+                        <ul>
+                            <li><strong>Limitations:</strong> Interaction rate-limiting; zero ticket tracking utility permissions.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Provisional Helper <span class="badge badge-prov">Rank 2</span></h3>
+                        <p>Initial functional tier built to assess subject accuracy and community communication patterns.</p>
+                        <ul>
+                            <li><strong>Lifecycle:</strong> Reverts back to baseline rank automatically if operational inactivity cross-checks match a &ge; 30 day rule.</li>
+                        </ul>
+                    </div>
+                    <div class="full-width">
+                        <h3>Helper <span class="badge badge-logic">Rank 3</span></h3>
+                        <p>Vetted system contributor and tactical assistance engine. Allowed to claim queue tickets and directly mark anomalous interactions to operational moderation panels. Requires passing Graph Validation gates to assume access profiles.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 7 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Advanced Roles Specifications</h1>
+                <h2>Executive &amp; Management Tiers (Ranks 4-7)</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>Mentor <span class="badge badge-logic">Rank 4</span></h3>
+                        <p>Quality enforcement asset, content auditing guide, and initiation vote panel operator.</p>
+                        <ul>
+                            <li><strong>Lifecycle:</strong> Highly tied to active <i>Judgment</i> vectors. Bound to random algorithmic audit workflows.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Steward <span class="badge badge-accent">Rank 5</span></h3>
+                        <p>Senior escalation layer bridging mentorship and enforcement.</p>
+                        <ul>
+                            <li><strong>Restrictions:</strong> Can manage advanced ticket escalations and initiate temporary containment, but cannot perform permanent server-wide bans.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Moderator <span class="badge badge-risk">Rank 6</span></h3>
+                        <p>System defensive response management, incident quarantine enforcement, and containment tracking execution.</p>
+                        <ul>
+                            <li><strong>Limitations:</strong> Activity tracking logs are delivered to transparent administrator console dashboards.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Admin <span class="badge badge-safe">Rank 7</span></h3>
+                        <p>Core system vector weight configuration and architecture tuning.</p>
+                        <ul>
+                            <li><strong>Security:</strong> Modifying core parameters requires multi-signature validation across the admin node ring.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 8 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Auxiliary &amp; Temporary Roles</h1>
+                <h2>The Sandbox and Isolation Zones</h2>
+                <div class="content-grid">
+                    <div>
+                        <p><strong>Trial Helper / Shadow Helper <span style="color:var(--color-prov)">🟡</span>:</strong> Granted on initial threshold entry. Shadow helpers operate with zero public display badge shifts; user performance metrics are mapped silently against standard baseline behaviors.</p>
+                        <p><strong>Observer Mentor <span style="color:var(--color-logic)">🔵</span>:</strong> Training assignment path intended to evaluate judgment profiles and ranking actions before issuing vote weights.</p>
+                    </div>
+                    <div>
+                        <p><strong>Intern Moderator <span style="color:var(--color-prov)">🟡</span>:</strong> Multi-sig dependent testing role. Requires second-signature confirmation across full moderators before locking out active community entries.</p>
+                        <p><strong>Risk User <span style="color:var(--color-risk)">🔴</span>:</strong> Silent containment sandbox. Normal interface structures remain viewable to prevent evasion discovery, but interaction utility scores are instantly zeroed, isolating the node from the metrics engine.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 9 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Role Capability &amp; Lifecycle Matrix</h1>
+                <h2>Operational Mechanics at a Glance</h2>
+                
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin: 16px 0; font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-logic);">
+                    <span>User</span> ➔ <span>Trial Helper</span> ➔ <span>Helper</span> ➔ <span>Mentor</span> ➔ <span>Steward</span> ➔ <span>Moderator</span>
+                </div>
+                <div style="text-align: center; color: var(--color-risk); font-size: 0.75rem; margin-top: -12px; margin-bottom: 16px;">
+                    ↓ Downward paths trigger Demotion / Recovery Protocols ↓
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                               <th>Role</th>
+                               <th>Core Purpose</th>
+                               <th>Critical Restrictions</th>
+                               <th>Demotion Triggers</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>User 🔵</strong></td>
+                                <td>Ecosystem Content Entry</td>
+                                <td>Interface rate limits enforced</td>
+                                <td>Automated Flag to Risk quarantine</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Provisional Helper 🟡</strong></td>
+                                <td>Onboarding Quality Test</td>
+                                <td>Read-only assets, zero escalation</td>
+                                <td>Inactivity &ge; 30 Days, Helpfulness &lt; 45</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Helper 🔵</strong></td>
+                                <td>Queue Verification Work</td>
+                                <td>Contextual ticket closure only</td>
+                                <td>Manipulation Risk &gt; 0.40, Cluster Hit</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mentor 🔵</strong></td>
+                                <td>Audit Control &amp; Voting</td>
+                                <td>No unilateral ban permissions</td>
+                                <td>Judgment &lt; 70, Bad audit variance</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Steward 🟣</strong></td>
+                                <td>Escalation &amp; Mediation</td>
+                                <td>No permanent server bans</td>
+                                <td>Manipulation Risk &gt; 0.10, Bad actions</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Moderator 🔴</strong></td>
+                                <td>Ecosystem Security Response</td>
+                                <td>All transactions written to public panel</td>
+                                <td>Single unverified critical block override</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Admin 🟢</strong></td>
+                                <td>System Architecture Tuning</td>
+                                <td>Multi-sig check constraints required</td>
+                                <td>Cluster vote of no confidence</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Risk User 🔴</strong></td>
+                                <td>Sybil / Toxin Quarantine</td>
+                                <td>Complete metric zero-weighting</td>
+                                <td>High Manipulation Risk, Manual Flag</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>01. Operational Role Hierarchy</span>
+                <span>Slide 10 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Multi-Dimensional Stat Engine</h1>
+                <h2>The Reputation Vector Model</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>The system treats reputation as a live vector profile rather than a simple scoring sheet:</p>
+                        <pre style="padding: 12px; margin-bottom: 12px;">R_u = { K, H, V, C, J, Trust, Risk_M, Risk_C }</pre>
+                        <ul>
+                            <li><strong>Knowledge (K):</strong> Algorithmic accuracy tracking of technical contributions.</li>
+                            <li><strong>Helpfulness (H):</strong> Multi-point impact evaluation verified by sentiment semantic engines.</li>
+                            <li><strong>Virtue (V):</strong> Behavioral pattern monitoring checking for policy alignment.</li>
+                            <li><strong>Consistency (C):</strong> Time-weighted moving stability score window.</li>
+                            <li><strong>Judgment (J):</strong> Alignment tracking of voting paths with true verified final states.</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                            <polygon points="150,20 240,75 205,170 95,170 60,75" fill="none" stroke="#3F3F46" stroke-width="2"/>
+                            <polygon points="150,55 210,85 185,140 120,130 90,90" fill="rgba(14, 165, 233, 0.2)" stroke="#0EA5E9" stroke-width="2" class="radar-poly"/>
+                            
+                            <text x="150" y="14" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Knowledge (K)</text>
+                            <text x="260" y="80" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Helpfulness (H)</text>
+                            <text x="215" y="185" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Virtue (V)</text>
+                            <text x="85" y="185" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Consistency (C)</text>
+                            <text x="40" y="80" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Judgment (J)</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>02. Multi-Dimensional Stat Engine</span>
+                <span>Slide 11 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Advanced System Signals</h1>
+                <h2>Risk and Confidence Matrix Core</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>Trust Confidence Score (T<sub>c</sub>) <span class="badge badge-safe">Modifier</span></h3>
+                        <p>A value scale from 0.0 to 1.0 that modifies absolute raw stat configurations. Builds dynamically via account structural baseline duration, verify milestones, and clean interaction networks.</p>
+                        
+                        <h3>Manipulation Risk Score (M<sub>r</sub>) <span class="badge badge-prov">Alert</span></h3>
+                        <p>Anomaly detection coefficient scanning for explicit optimization trails designed to simulate authentic help signals.</p>
+                    </div>
+                    <div>
+                        <h3>Collusion Risk Score (C<sub>r</sub>) <span class="badge badge-risk">Critical</span></h3>
+                        <p>Evaluates network loops via graph traversal architectures to pick out artificial farming groupings and mutual upvote rings.</p>
+                        
+                        <h3>Behavior Variance Score (B<sub>v</sub>) <span class="badge badge-accent">Tracker</span></h3>
+                        <p>Monitors baseline performance deviations over sliding windows to intercept profile takeovers or account transaction sales.</p>
+                        
+                        <div style="margin-top: 24px; padding: 16px; background: #000; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.8rem; margin-bottom: 8px; color: var(--text-muted); text-align: center;">Governance Risk Heatmap</div>
+                            <svg viewBox="0 0 200 60" style="max-height: 60px;" preserveAspectRatio="xMidYMid meet">
+                                <rect x="0" y="0" width="45" height="20" fill="rgba(16, 185, 129, 0.8)" rx="2"/>
+                                <rect x="50" y="0" width="45" height="20" fill="rgba(16, 185, 129, 0.5)" rx="2"/>
+                                <rect x="100" y="0" width="45" height="20" fill="rgba(245, 158, 11, 0.6)" rx="2"/>
+                                <rect x="150" y="0" width="45" height="20" fill="rgba(239, 68, 68, 0.4)" rx="2"/>
+                                
+                                <rect x="0" y="25" width="45" height="20" fill="rgba(16, 185, 129, 0.5)" rx="2"/>
+                                <rect x="50" y="25" width="45" height="20" fill="rgba(245, 158, 11, 0.6)" rx="2"/>
+                                <rect x="100" y="25" width="45" height="20" fill="rgba(239, 68, 68, 0.8)" rx="2"/>
+                                <rect x="150" y="25" width="45" height="20" fill="rgba(239, 68, 68, 1.0)" rx="2"/>
+                            </svg>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--text-muted); margin-top: 4px;">
+                                <span>Low Risk (Tc High)</span>
+                                <span>High Risk (Cr/Mr Spike)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>02. Multi-Dimensional Stat Engine</span>
+                <span>Slide 12 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Raw Stats vs. Effective Stats</h1>
+                <h2>The Confidence Weighting System</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>Raw point systems fail when targets can be targeted and farmed. The V2+ architecture implements trust-attenuated calculation matrices before factoring eligibility:</p>
+                        <pre style="margin-bottom: 16px; border-color: var(--color-prov); color: var(--color-prov);">
+Effective_Stat = Raw_Stat × Tc × (1 - Mr) × (1 - Cr)</pre>
+                        <ul>
+                            <li>Raw accumulation does not guarantee promotion access.</li>
+                            <li>If an asset attempts point padding via alt-accounts, its C<sub>r</sub> value shifts up, resetting effective metrics back to 0.</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid meet">
+                            <rect x="10" y="25" width="90" height="30" rx="4" fill="#18181B" stroke="#0EA5E9"/>
+                            <text x="55" y="43" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">Raw System Input</text>
+                            <path d="M 100 40 L 142 72" stroke="#0EA5E9" stroke-width="1.5" class="flow-line" style="animation-delay: 0.2s;"/>
+                            
+                            <rect x="10" y="115" width="90" height="40" rx="4" fill="#450a0a" stroke="#EF4444"/>
+                            <text x="55" y="133" fill="#EF4444" font-size="9" text-anchor="middle" font-family="sans-serif">Signal Constraints</text>
+                            <text x="55" y="145" fill="#EF4444" font-size="7" text-anchor="middle" font-family="sans-serif">Mr, Cr, Variance</text>
+                            <path d="M 100 135 L 144 102" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 0.4s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 0.8s;">
+                                <circle cx="160" cy="85" r="22" fill="#18181B" stroke="#F59E0B" stroke-width="2"/>
+                                <text x="160" y="90" fill="#F59E0B" font-size="14" text-anchor="middle" font-weight="bold" font-family="sans-serif">×</text>
+                            </g>
+                            <path d="M 182 85 L 220 85" stroke="#F59E0B" stroke-width="1.5" class="flow-line" style="animation-delay: 1.2s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 1.6s;">
+                                <rect x="220" y="65" width="90" height="40" rx="4" fill="#064E3B" stroke="#10B981" stroke-width="2"/>
+                                <text x="265" y="89" fill="#10B981" font-size="10" text-anchor="middle" font-weight="bold" font-family="sans-serif">Effective Vector</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>02. Multi-Dimensional Stat Engine</span>
+                <span>Slide 13 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Stat Threshold &amp; Calibration Table</h1>
+                <h2>Ecosystem Progression Parameters</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sym</th>
+                                <th>Metric Profile</th>
+                                <th>Base Entry</th>
+                                <th>Helper</th>
+                                <th>Mentor</th>
+                                <th style="color:var(--color-accent)">Steward</th>
+                                <th>Admin Target</th>
+                                <th>Calibration Interval</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>K</strong></td>
+                                <td>Knowledge Accuracy</td>
+                                <td>&gt; 10</td>
+                                <td>&ge; 150</td>
+                                <td>&ge; 600</td>
+                                <td>&ge; 900</td>
+                                <td>&ge; 1200</td>
+                                <td>7-Day Moving Evaluation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>H</strong></td>
+                                <td>Helpfulness Density</td>
+                                <td>&gt; 5</td>
+                                <td>&ge; 200</td>
+                                <td>&ge; 500</td>
+                                <td>&ge; 750</td>
+                                <td>&ge; 1000</td>
+                                <td>Continuous Linear Decay</td>
+                            </tr>
+                            <tr>
+                                <td><strong>V</strong></td>
+                                <td>Virtue Matrix Value</td>
+                                <td>&gt; 75</td>
+                                <td>&ge; 90</td>
+                                <td>&ge; 95</td>
+                                <td>&ge; 97</td>
+                                <td>&ge; 99</td>
+                                <td>Real-time Evaluation Stream</td>
+                            </tr>
+                            <tr>
+                                <td><strong>C</strong></td>
+                                <td>Consistency Target</td>
+                                <td>N/A</td>
+                                <td>&ge; 65</td>
+                                <td>&ge; 80</td>
+                                <td>&ge; 85</td>
+                                <td>&ge; 90</td>
+                                <td>30-Day Normalized Segment</td>
+                            </tr>
+                            <tr>
+                                <td><strong>J</strong></td>
+                                <td>Judgment Quality</td>
+                                <td>N/A</td>
+                                <td>&ge; 50</td>
+                                <td>&ge; 85</td>
+                                <td>&ge; 90</td>
+                                <td>&ge; 95</td>
+                                <td>Per Governance Event</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tc</strong></td>
+                                <td>Trust Confidence Scale</td>
+                                <td>0.10</td>
+                                <td>&ge; 0.60</td>
+                                <td>&ge; 0.85</td>
+                                <td>&ge; 0.90</td>
+                                <td>&ge; 0.95</td>
+                                <td>Bi-Weekly Graph Audit</td>
+                            </tr>
+                            <tr>
+                                <td style="color:var(--color-risk)"><strong>Mr</strong></td>
+                                <td>Manipulation Risk Ceiling</td>
+                                <td>&lt; 0.50</td>
+                                <td>&lt; 0.15</td>
+                                <td>&lt; 0.05</td>
+                                <td>&lt; 0.02</td>
+                                <td>&lt; 0.01</td>
+                                <td>Dynamic Metric Profile Clustering</td>
+                            </tr>
+                            <tr>
+                                <td style="color:var(--color-risk)"><strong>Cr</strong></td>
+                                <td>Collusion Risk Limit</td>
+                                <td>&lt; 0.40</td>
+                                <td>&lt; 0.10</td>
+                                <td>&lt; 0.02</td>
+                                <td>&lt; 0.005</td>
+                                <td>&lt; 0.001</td>
+                                <td>Graph Traversal (Daily)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>02. Multi-Dimensional Stat Engine</span>
+                <span>Slide 14 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Promotion System Pipeline</h1>
+                <h2>Multi-Layer Advancement Logic Flowchart</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>Advancement within the ecosystem flows sequentially through separate protocol checkpoints to identify anomalous actors before role access profiles scale up.</p>
+                        
+                        <div class="code-simulation">
+                            <button id="run-pipeline-btn">
+                                Run Pipeline Script
+                            </button>
+                            <div>$ node pipeline_eval.js --user @applicant</div>
+                            <div id="sim-log" class="log-output">
+                                <span style="color:#A1A1AA">Waiting for execution...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 340 220" preserveAspectRatio="xMidYMid meet">
+                            <rect x="125" y="5" width="90" height="25" rx="3" fill="#18181B" stroke="#0EA5E9"/>
+                            <text x="170" y="20" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">1. Eligibility Gate</text>
+                            <path d="M 170 30 L 170 45" stroke="#0EA5E9" stroke-width="1.5" class="flow-line" style="animation-delay: 0.2s;"/>
+                            
+                            <rect x="120" y="45" width="100" height="25" rx="3" fill="#18181B" stroke="#0EA5E9"/>
+                            <text x="170" y="60" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">2. Graph Cluster Scan</text>
+                            <path d="M 220 57.5 L 255 57.5" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 0.5s;"/>
+                            <path d="M 170 70 L 170 85" stroke="#0EA5E9" stroke-width="1.5" class="flow-line" style="animation-delay: 0.8s;"/>
+                            
+                            <rect x="120" y="85" width="100" height="25" rx="3" fill="#18181B" stroke="#0EA5E9"/>
+                            <text x="170" y="100" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">3. Stochastic Audit</text>
+                            <path d="M 220 97.5 L 255 97.5" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 1.1s;"/>
+                            <path d="M 170 110 L 170 125" stroke="#0EA5E9" stroke-width="1.5" class="flow-line" style="animation-delay: 1.4s;"/>
+                            
+                            <rect x="120" y="125" width="100" height="25" rx="3" fill="#18181B" stroke="#0EA5E9"/>
+                            <text x="170" y="140" fill="#FAFAFA" font-size="9" text-anchor="middle" font-family="sans-serif">4. Weighted Vote Mix</text>
+                            <path d="M 170 150 L 170 165" stroke="#0EA5E9" stroke-width="1.5" class="flow-line" style="animation-delay: 1.7s;"/>
+                            
+                            <g class="node-pop" style="animation-delay: 2.0s;">
+                                <rect x="115" y="165" width="110" height="30" rx="3" fill="#064E3B" stroke="#10B981" stroke-width="2"/>
+                                <text x="170" y="184" fill="#10B981" font-size="10" text-anchor="middle" font-weight="bold" font-family="sans-serif">5. Assignment Engine</text>
+                            </g>
+                            
+                            <g class="node-pop alert-node" style="animation-delay: 2.3s;">
+                                <rect x="255" y="50" width="75" height="60" rx="4" fill="#450a0a" stroke="#EF4444"/>
+                                <text x="292" y="85" fill="#EF4444" font-size="10" text-anchor="middle" font-weight="bold" font-family="sans-serif">Quarantine</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>03. Promotion System Pipeline</span>
+                <span>Slide 15 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Promotion Pipeline Step-by-Step</h1>
+                <h2>Functional Checkpoint Breakdown</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>1. Eligibility Gate</h3>
+                        <p>Validates vector scores against role benchmarks. Blocks individuals whose profiles rely on unverified raw scoring lines.</p>
+                        <h3>2. Graph Validation Gate</h3>
+                        <p>Traces structural community connections around the candidate node to flag dense upvote networks or sybil configurations.</p>
+                        <h3>3. Stochastic Audit Gate</h3>
+                        <p>Pushes an unannounced, random slice of transaction records to verification reviews, breaking pre-programmed farming loops.</p>
+                    </div>
+                    <div>
+                        <h3>4. Weighted Voting System</h3>
+                        <p>Assigns voter weight values modified directly by peer trust metrics:</p>
+                        <pre style="margin-bottom: 16px;">Vote_Impact = Role_Rank × Tc_Voter</pre>
+                        <h3>5. Final Assignment Engine</h3>
+                        <p>Validates programmatic totals. Grants structural access or applies system-enforced cooling timers on failed validation paths.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>03. Promotion System Pipeline</span>
+                <span>Slide 16 of 40</span>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div>
+                <h1>Decision Transparency Layer</h1>
+                <h2>Preventing Black-Box Governance Perception</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>To maintain trust, the system must provide explainability without exposing its internal security heuristics to adversarial manipulation.</p>
+                        <h3>Explainability Rules</h3>
+                        <ul style="margin-bottom: 20px;">
+                            <li><strong>Users May See:</strong> Core pass/fail factors, broad category explanations, and whether an audit is required.</li>
+                            <li><strong>Users Do NOT See:</strong> Hidden detection weights, raw anti-abuse heuristics, shadow tracking scores, or exact metric ceilings.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                            <div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                                <strong style="color: var(--color-risk); font-family: var(--font-mono);">PROMOTION RESULT: DELAYED</strong>
+                            </div>
+                            <div style="padding: 16px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+                                <span style="color: var(--color-safe)">[PASS]</span> Knowledge Validation<br>
+                                <span style="color: var(--color-safe)">[PASS]</span> Consistency Metrics<br>
+                                <span style="color: var(--color-safe)">[PASS]</span> Virtue Adherence<br><br>
+                                <span style="color: var(--color-prov)">[FLAGGED]</span> Interaction Network Irregularity<br>
+                                <span style="color: var(--color-risk)">[ACTION]</span> Manual Audit Required (Cool-down: 7d)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>03. Promotion System Pipeline</span>
+                <span>Slide 17 of 40</span>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div>
+                <h1>Governance Correction Protocol</h1>
+                <h2>Demotions, Appeals, and Reputation Recovery</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>A. Automated Demotion Logic</h3>
+                        <p>Roles are stripped if real-time tracking detects:</p>
+                        <ul>
+                            <li>Sustained Virtue collapse (policy violations)</li>
+                            <li>Collusion detection threshold exceeded</li>
+                            <li>Prolonged inactivity decay</li>
+                            <li>Repeated stochastic audit failures</li>
+                        </ul>
+                        
+                        <h3>B. The Appeals Layer</h3>
+                        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-logic); background: #000; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                            User Challenge ➔ Evidence Submission ➔ Review Quorum ➔ Audit Replay ➔ Final Decision
+                        </div>
+                    </div>
+                    <div>
+                        <h3>C. Emergency Override System</h3>
+                        <p>Admins maintain manual fail-safes including global Admin Freezes, Emergency Database Rollbacks, and Temporary Role Suspensions pending manual audit intervention.</p>
+                        
+                        <div style="background: rgba(139, 92, 246, 0.1); border-left: 3px solid var(--color-accent); padding: 16px; margin-top: 16px;">
+                            <h3 style="color: var(--color-accent); margin-top: 0;">D. Reputation Recovery Path</h3>
+                            <p style="margin-bottom: 0;"><strong>Demotion ≠ Permanent Exile.</strong> Users placed in shadow risk tiers or demoted are transitioned to a <em>Probation Mode</em>. Through sustained behavior rebuilds and verified organic assistance, confidence vectors are slowly restored.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>03. Promotion System Pipeline</span>
+                <span>Slide 18 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Implementation Architecture</h1>
+                <h2>Technical Stack &amp; Data Flow</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>A practical, realistic stack model translating conceptual governance into an operational Discord application.</p>
+                        <div class="table-wrapper" style="margin-top: 16px;">
+                            <table>
+                                <thead><tr><th>Layer</th><th>Stack Examples</th><th>Responsibility</th></tr></thead>
+                                <tbody>
+                                    <tr><td><strong>Discord Layer</strong></td><td>Discord.js, API Gateway</td><td>Event ingestion, slash commands</td></tr>
+                                    <tr><td><strong>Processing</strong></td><td>Node.js, TypeScript</td><td>Event normalization, cooldowns</td></tr>
+                                    <tr><td><strong>Graph/Risk</strong></td><td>Python (NetworkX)</td><td>Collusion &amp; density evaluation</td></tr>
+                                    <tr><td><strong>Storage</strong></td><td>PostgreSQL, Redis</td><td>Persistence, caching, queuing</td></tr>
+                                    <tr><td><strong>Admin Layer</strong></td><td>Next.js, tRPC</td><td>Audit explorer, moderation panels</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 300 350" preserveAspectRatio="xMidYMid meet">
+                            <rect x="100" y="10" width="100" height="30" rx="4" fill="#18181B" stroke="#8B5CF6" stroke-width="1.5"/>
+                            <text x="150" y="28" fill="#8B5CF6" font-size="10" text-anchor="middle" font-weight="bold" font-family="sans-serif">Discord Gateway</text>
+                            <path d="M 150 40 L 150 60" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 0.2s;"/>
+                            <rect x="100" y="60" width="100" height="30" rx="4" fill="#18181B" stroke="#0EA5E9" stroke-width="1.5"/>
+                            <text x="150" y="78" fill="#FAFAFA" font-size="10" text-anchor="middle" font-family="sans-serif">Event Processing</text>
+                            <path d="M 150 90 L 150 100" stroke="#3F3F46" stroke-width="1.5" class="flow-line" style="animation-delay: 0.4s;"/>
+                            <path d="M 80 100 L 220 100" stroke="#3F3F46" stroke-width="1.5" class="flow-line" style="animation-delay: 0.6s;"/>
+                            <path d="M 80 100 L 80 110" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 0.8s;"/>
+                            <path d="M 220 100 L 220 110" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 0.8s;"/>
+                            <g class="node-pop" style="animation-delay: 1.0s;">
+                                <rect x="30" y="110" width="100" height="30" rx="4" fill="#18181B" stroke="#10B981" stroke-width="1.5"/>
+                                <text x="80" y="128" fill="#FAFAFA" font-size="10" text-anchor="middle" font-family="sans-serif">Scoring Engine</text>
+                            </g>
+                            <g class="node-pop" style="animation-delay: 1.2s;">
+                                <rect x="170" y="110" width="100" height="30" rx="4" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                                <text x="220" y="128" fill="#FAFAFA" font-size="10" text-anchor="middle" font-family="sans-serif">Graph / Risk Layer</text>
+                            </g>
+                            <path d="M 80 140 L 80 160" stroke="#3F3F46" stroke-width="1.5" class="flow-line" style="animation-delay: 1.4s;"/>
+                            <path d="M 220 140 L 220 160" stroke="#3F3F46" stroke-width="1.5" class="flow-line" style="animation-delay: 1.4s;"/>
+                            <path d="M 80 160 L 220 160" stroke="#3F3F46" stroke-width="1.5" class="flow-line" style="animation-delay: 1.6s;"/>
+                            <path d="M 150 160 L 150 180" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 1.8s;"/>
+                            <g class="node-pop" style="animation-delay: 2.0s;">
+                                <rect x="100" y="180" width="100" height="30" rx="4" fill="#18181B" stroke="#F59E0B" stroke-width="1.5"/>
+                                <text x="150" y="198" fill="#FAFAFA" font-size="10" text-anchor="middle" font-family="sans-serif">Promotion Engine</text>
+                            </g>
+                            <path d="M 150 210 L 150 230" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 2.2s;"/>
+                            <g class="node-pop" style="animation-delay: 2.4s;">
+                                <rect x="100" y="230" width="100" height="30" rx="4" fill="#18181B" stroke="#10B981" stroke-width="1.5" stroke-dasharray="2,2"/>
+                                <text x="150" y="248" fill="#10B981" font-size="10" text-anchor="middle" font-family="sans-serif">Persistence Layer</text>
+                            </g>
+                            <path d="M 150 260 L 150 280" stroke="#3F3F46" stroke-width="1.5" marker-end="url(#arrow-gray)" class="flow-line" style="animation-delay: 2.6s;"/>
+                            <g class="node-pop" style="animation-delay: 2.8s;">
+                                <rect x="100" y="280" width="100" height="30" rx="4" fill="#064E3B" stroke="#10B981" stroke-width="1.5"/>
+                                <text x="150" y="298" fill="#10B981" font-size="10" text-anchor="middle" font-weight="bold" font-family="sans-serif">Dashboard Panel</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 19 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Example Project Structure</h1>
+                <h2>Codebase Organization for Governance Bots</h2>
+                <div class="content-grid">
+                    <div>
+                        <pre style="font-size: 0.8rem; line-height: 1.4; padding: 16px;">
+discord-karma-system/
+├── bot/
+│   ├── commands/      <span style="color:var(--text-muted)"># Slash commands (/profile)</span>
+│   ├── listeners/     <span style="color:var(--text-muted)"># Message, thread events</span>
+│   └── permissions/   <span style="color:var(--text-muted)"># Discord role sync</span>
+├── core/
+│   ├── scoring/       <span style="color:var(--text-muted)"># Semantic evaluators</span>
+│   ├── reputation/    <span style="color:var(--text-muted)"># Decay &amp; trust math</span>
+│   ├── promotion/     <span style="color:var(--text-muted)"># Eligibility queuing</span>
+│   └── graph-alerts/  <span style="color:var(--text-muted)"># Subgraph risk checks</span>
+├── database/
+│   ├── prisma/        <span style="color:var(--text-muted)"># schema.prisma</span>
+│   └── migrations/    <span style="color:var(--text-muted)"># Schema states</span>
+├── dashboard/
+│   ├── admin-panel/   <span style="color:var(--text-muted)"># Next.js frontend</span>
+│   └── analytics/     <span style="color:var(--text-muted)"># Moderation graphs</span>
+├── config/            <span style="color:var(--text-muted)"># Weight thresholds</span>
+└── tests/             <span style="color:var(--text-muted)"># Red-team test suites</span></pre>
+                    </div>
+                    <div style="display:flex; flex-direction: column; justify-content: center; gap: 16px;">
+                        <div style="background: rgba(14, 165, 233, 0.05); padding: 16px; border-radius: 8px; border-left: 3px solid var(--color-logic);">
+                            <h3 style="margin-top:0; font-size:1rem; color:var(--color-logic);">Bot Layer</h3>
+                            <p style="margin-bottom:0; font-size:0.9rem;">Strictly handles Discord API interactions. Isolated from core math to prevent tightly coupled code.</p>
+                        </div>
+                        <div style="background: rgba(139, 92, 246, 0.05); padding: 16px; border-radius: 8px; border-left: 3px solid var(--color-accent);">
+                            <h3 style="margin-top:0; font-size:1rem; color:var(--color-accent);">Core Layer</h3>
+                            <p style="margin-bottom:0; font-size:0.9rem;">Pure TypeScript functions containing the RPG engine rules. Highly unit-testable without mocking Discord.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 20 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Sample Implementation Snippets</h1>
+                <h2>Translating Rules to Code (TypeScript)</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3 style="font-size:1rem; color:var(--color-logic);">1. Event Pipeline Entry</h3>
+                        <pre style="font-size: 0.75rem; padding: 12px; margin-bottom: 12px;">
+<span style="color:var(--color-accent)">client</span>.on(<span style="color:#A5B4FC">'messageCreate'</span>, <span style="color:var(--color-safe)">async</span> (message) => {
+  <span style="color:var(--text-muted)">// Route raw data into the isolated scoring engine</span>
+  <span style="color:var(--color-safe)">await</span> scoringEngine.<span style="color:#38BDF8">processEvent</span>({
+    userId: message.author.id,
+    content: message.content,
+    channelId: message.channelId
+  });
+});</pre>
+                        <h3 style="font-size:1rem; color:var(--color-logic);">2. Reputation Threshold Update</h3>
+                        <pre style="font-size: 0.75rem; padding: 12px;">
+<span style="color:var(--color-safe)">if</span> (semanticScore > config.minHelpfulThreshold) {
+    userReputation.score += (baseBonus * trustMultiplier);
+    <span style="color:var(--color-safe)">await</span> db.reputation.<span style="color:#38BDF8">update</span>(userReputation);
+}</pre>
+                    </div>
+                    <div>
+                        <h3 style="font-size:1rem; color:var(--color-prov);">3. Promotion Eligibility Check</h3>
+                        <pre style="font-size: 0.75rem; padding: 12px; margin-bottom: 12px;">
+<span style="color:var(--color-safe)">const</span> isEligible = (
+   vector.knowledge > thresholds.minK &&
+   vector.virtue > thresholds.minV &&
+   vector.collusionRisk < thresholds.maxRisk
+);
+
+<span style="color:var(--color-safe)">if</span> (isEligible) {
+   <span style="color:var(--color-safe)">await</span> auditQueue.<span style="color:#38BDF8">enqueue</span>(user.id);
+}</pre>
+                        <h3 style="font-size:1rem; color:var(--color-risk);">4. Graph Risk Evaluation (Pseudo)</h3>
+                        <pre style="font-size: 0.75rem; padding: 12px; border-color:var(--color-risk);">
+<span style="color:var(--color-safe)">def</span> <span style="color:#38BDF8">check_collusion</span>(user_id, interaction_graph):
+    subgraph = extract_local_cluster(user_id, depth=2)
+    density = calculate_reciprocity(subgraph)
+    <span style="color:var(--color-safe)">if</span> density > 0.8:
+        <span style="color:var(--color-safe)">return</span> RiskLevel.HIGH
+    <span style="color:var(--color-safe)">return</span> RiskLevel.NORMAL</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 21 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Deployment &amp; Startup Workflow</h1>
+                <h2>Bootstrapping the Governance Environment</h2>
+                <div class="content-grid">
+                    <div>
+                        <ul style="list-style-type: none; padding: 0;">
+                            <li style="margin-bottom: 12px;"><strong>Step 1: Environment Setup</strong><br>
+                            <code style="background:#000; padding:2px 6px; border-radius:4px; font-size:0.8rem; color:var(--color-safe)">npm init &amp;&amp; npm install discord.js prisma pg redis</code></li>
+                            
+                            <li style="margin-bottom: 12px;"><strong>Step 2: Configure Environment Targets</strong><br>
+                            <code style="background:#000; padding:2px 6px; border-radius:4px; font-size:0.8rem; color:var(--text-muted)">DISCORD_TOKEN=...<br>DATABASE_URL=...<br>REDIS_URL=...</code></li>
+                            
+                            <li style="margin-bottom: 12px;"><strong>Step 3: Database Hydration</strong><br>
+                            <code style="background:#000; padding:2px 6px; border-radius:4px; font-size:0.8rem; color:var(--color-logic)">npx prisma migrate dev</code></li>
+                            
+                            <li style="margin-bottom: 12px;"><strong>Step 4: Launch Development Instance</strong><br>
+                            <code style="background:#000; padding:2px 6px; border-radius:4px; font-size:0.8rem; color:var(--color-prov)">npm run dev</code></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="background: rgba(24, 24, 27, 0.9); border: 1px solid var(--border-color); padding: 20px; border-radius: 8px;">
+                            <h3 style="margin-top:0;">Step 5: Enable Shadow Scoring Mode</h3>
+                            <p style="font-size:0.9rem;">The bot connects to Discord but enforces <strong>NO live promotions</strong>. It strictly collects telemetry, builds graphs, and writes to database logs for tuning.</p>
+                            
+                            <h3>Step 6: Gradual Governance Activation</h3>
+                            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-logic); display: flex; flex-direction: column; gap: 6px;">
+                                <span>[1] Telemetry Collection</span>
+                                <span>[2] Shadow Scoring Models</span>
+                                <span>[3] Recommendation Mode (Staff confirms)</span>
+                                <span>[4] Hybrid Governance</span>
+                                <span style="color:var(--color-safe)">[5] Selective Automation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 22 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Development vs Production Deployment</h1>
+                <h2>Infrastructure Topology</h2>
+                <div class="content-grid">
+                    <div class="table-wrapper" style="margin-top: 0;">
+                        <table>
+                            <thead><tr><th>Environment</th><th>Tooling Examples</th><th>Characteristics</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong style="color:var(--text-muted)">Development</strong></td>
+                                    <td>Localhost, SQLite, Docker Compose</td>
+                                    <td>Verbose logging, immediate restart, local DB seed files.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong style="color:var(--color-accent)">Production</strong></td>
+                                    <td>Railway, Render, Fly.io, DigitalOcean</td>
+                                    <td>Managed PostgreSQL, Redis caching, daily backups, uptime monitoring.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="diagram-container" style="min-height: 180px;">
+                        <svg viewBox="0 0 350 140" preserveAspectRatio="xMidYMid meet">
+                            <rect x="10" y="10" width="140" height="110" rx="6" fill="#18181B" stroke="#3F3F46" stroke-width="1"/>
+                            <text x="80" y="30" fill="#A1A1AA" font-size="9" text-anchor="middle" font-weight="bold" font-family="sans-serif">DEVELOPMENT</text>
+                            <rect x="25" y="45" width="110" height="25" rx="3" fill="#27272A" stroke="#0EA5E9"/>
+                            <text x="80" y="60" fill="#FAFAFA" font-size="8" text-anchor="middle" font-family="sans-serif">Localhost Node Process</text>
+                            <rect x="25" y="80" width="110" height="25" rx="3" fill="#27272A" stroke="#10B981"/>
+                            <text x="80" y="95" fill="#FAFAFA" font-size="8" text-anchor="middle" font-family="sans-serif">SQLite (.db file)</text>
+                            
+                            <path d="M 160 65 L 190 65" stroke="#3F3F46" stroke-width="2" marker-end="url(#arrow-gray)" stroke-dasharray="2,2"/>
+                            
+                            <rect x="200" y="10" width="140" height="110" rx="6" fill="#18181B" stroke="#8B5CF6" stroke-width="1.5"/>
+                            <text x="270" y="30" fill="#8B5CF6" font-size="9" text-anchor="middle" font-weight="bold" font-family="sans-serif">PRODUCTION</text>
+                            <rect x="215" y="45" width="110" height="25" rx="3" fill="#27272A" stroke="#0EA5E9"/>
+                            <text x="270" y="60" fill="#FAFAFA" font-size="8" text-anchor="middle" font-family="sans-serif">Cloud VPS (Docker)</text>
+                            <rect x="215" y="80" width="50" height="25" rx="3" fill="#27272A" stroke="#10B981"/>
+                            <text x="240" y="95" fill="#FAFAFA" font-size="8" text-anchor="middle" font-family="sans-serif">Postgres</text>
+                            <rect x="275" y="80" width="50" height="25" rx="3" fill="#27272A" stroke="#EF4444"/>
+                            <text x="300" y="95" fill="#FAFAFA" font-size="8" text-anchor="middle" font-family="sans-serif">Redis</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 23 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Testing &amp; Validation Strategy</h1>
+                <h2>Preventing Cascading Governance Failures</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>A flawed rule in an RPG system can permanently fracture community trust. Strict QA gates are mandatory.</p>
+                        
+                        <h3 style="color:var(--color-logic)">1. Unit Testing</h3>
+                        <p style="font-size:0.9rem;">Test the core math independently. Verify stat engine threshold crosses, exponential decay calculations, and promotion eligibility gating outside of Discord.</p>
+                        
+                        <h3 style="color:var(--color-prov)">2. Integration Testing</h3>
+                        <p style="font-size:0.9rem;">Mock the Discord event pipeline to ensure message creation properly sequences into database behavior and generates expected audit workflows.</p>
+                    </div>
+                    <div>
+                        <h3 style="color:var(--color-risk)">3. Red Team Testing</h3>
+                        <p style="font-size:0.9rem;">Deploy simulated adversarial accounts (bots) to a staging server. Attempt to trigger:</p>
+                        <ul style="font-size:0.9rem;">
+                            <li>Vote cartel loop formations</li>
+                            <li>Stat inflation via repeated keyword usage</li>
+                            <li>Sybil-based interaction farming</li>
+                        </ul>
+
+                        <h3 style="color:var(--color-safe)">4. Shadow Deployment Validation</h3>
+                        <p style="font-size:0.9rem;">Run the production system silently. Compare the system's "algorithmic recommendations" against actual manual staff promotions to tune threshold confidence.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 24 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Monitoring &amp; Observability</h1>
+                <h2>Maintaining Operational Visibility</h2>
+                <div class="content-grid">
+                    <div>
+                        <div style="background: rgba(14, 165, 233, 0.05); border-left: 3px solid var(--color-logic); padding: 16px; margin-bottom: 16px;">
+                            <h3 style="margin-top:0; color:var(--color-logic)">Metrics Dashboard (Grafana/Datadog)</h3>
+                            <p style="font-size:0.9rem; margin-bottom:0;">Track global macro-trends: Server-wide promotion rates, abuse flag velocity, stochastic audit queue depth, and collusion network alerts.</p>
+                        </div>
+                        <div style="background: rgba(239, 68, 68, 0.05); border-left: 3px solid var(--color-risk); padding: 16px;">
+                            <h3 style="margin-top:0; color:var(--color-risk)">Proactive Alerting</h3>
+                            <p style="font-size:0.9rem; margin-bottom:0;">Configure Discord Webhook alerts to a private admin channel for sudden anomaly spikes (e.g., "50+ Users crossed eligibility in 1 hour - Potential Exploit").</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Structured Logging Events</h3>
+                        <p>Write explicitly categorized event logs to trace algorithmic decisions during user appeals:</p>
+                        <pre style="font-size:0.75rem; padding:12px; margin-bottom:8px;">
+<span style="color:var(--color-safe)">INFO</span>   [PromotionGranted] User @xyz
+<span style="color:var(--color-prov)">WARN</span>   [AuditTriggered] High Variance
+<span style="color:var(--color-risk)">ALERT</span>  [VoteAnomalyDetected] Cluster ID 9
+<span style="color:var(--color-accent)">SYSTEM</span> [DecayCycle] 1420 Nodes Updated</pre>
+                        <p style="font-size:0.85rem; color:var(--text-muted)">Logs must retain enough context to manually rebuild a user's timeline without violating data privacy limits.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>04. Implementation &amp; Operations</span>
+                <span>Slide 25 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Anti-Abuse &amp; Security Infrastructure</h1>
+                <h2>Algorithmic Threat Mitigation Strategy</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>The platform treats interaction layers as adversarial landscapes. The goal is to isolate and mitigate manipulation attempts before they reach governance loops.</p>
+                        <ul>
+                            <li>Replaces standard retroactive cleanups with validation patterns.</li>
+                            <li>Monitors system trends over time to identify cluster networks rather than analyzing events in absolute isolation.</li>
+                        </ul>
+                    </div>
+                    <pre style="border-color: var(--color-risk); color: var(--color-risk);">
+[System Security Stack Hierarchy]
+┌──────────────────────────────────────┐
+│ Phase A: Natural Text Semantic Logic │
+└──────────────────────────────────────┘
+                  │
+                  ▼
+┌──────────────────────────────────────┐
+│ Phase B: Adaptive Density Filters    │
+└──────────────────────────────────────┘
+                  │
+                  ▼
+┌──────────────────────────────────────┐
+│ Phase C: Graph Cluster Traversal     │
+└──────────────────────────────────────┘</pre>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>05. Anti-Abuse &amp; Security System</span>
+                <span>Slide 26 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Deep Dive: Technical Mitigations</h1>
+                <h2>Automated Integrity Checks</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>Semantic Helpfulness Engine</h3>
+                        <p>Evaluates syntax complexity, technical vocabulary density, and code segments. Reduces the impact of generic, metric-padding statements (e.g., repeating "Good luck!"), verifying authentic contextual value before issuing scoring weight.</p>
+                        
+                        <h3>Interaction Diversity Filter</h3>
+                        <p>Reduces scoring potential for actions passing through identical accounts. High-frequency interactions within locked identity pairs hit score decay ceilings inside a moving 14-day tracking configuration.</p>
+                    </div>
+                    <div>
+                        <h3>Vote Collusion Graph Detection</h3>
+                        <p>Maps interaction paths across network maps to spot isolated communities trying to force token allocations or alter voting metrics.</p>
+                        
+                        <div class="diagram-container" style="min-height: 160px; margin-top: 16px;">
+                            <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet">
+                                <circle cx="50" cy="60" r="10" fill="#18181B" stroke="#0EA5E9" stroke-width="1.5"/>
+                                <circle cx="150" cy="60" r="10" fill="#18181B" stroke="#0EA5E9" stroke-width="1.5"/>
+                                <circle cx="100" cy="20" r="10" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                                <circle cx="100" cy="100" r="10" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                                <path d="M 60 60 L 140 60" stroke="#3F3F46" stroke-width="1" stroke-dasharray="2,2"/>
+                                <path d="M 100 30 L 100 90" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 0.2s;"/>
+                                <path d="M 92 28 L 58 52" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 0.5s;"/>
+                                <path d="M 108 28 L 142 52" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 0.8s;"/>
+                                <text x="100" y="118" fill="#EF4444" font-size="8" text-anchor="middle" font-weight="bold" font-family="sans-serif">Collusion Cluster Mapped</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>05. Anti-Abuse &amp; Security System</span>
+                <span>Slide 27 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Structural Integrity Layers</h1>
+                <h2>Advanced Isolation &amp; Decay Mechanics</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>Shadow Risk Tier System</h3>
+                        <p>Pushes identified manipulation rings into an isolated testing environment. User interfaces remain normal, but metric evaluations are dropped from core governance pipelines while operations record threat signatures.</p>
+                        
+                        <h3>Periodic Normalization Cycles</h3>
+                        <p>Resets system-wide inflation trends every Sunday at 00:00 UTC using localized decay algorithms:</p>
+                        <pre>S_new = S_old × e^(-λt)</pre>
+                    </div>
+                    <div>
+                        <h3>Behavioral Fingerprinting</h3>
+                        <p>Monitors interface interactions (e.g., typing pacing, navigation steps, active timelines) to find unlinked alternate accounts tracking across the network grid.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>05. Anti-Abuse &amp; Security System</span>
+                <span>Slide 28 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Security &amp; Privacy Considerations</h1>
+                <h2>Protecting User Data in Behavioral Analysis</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>Deploying behavioral algorithms requires strict adherence to privacy norms. <strong>This system does NOT require invasive surveillance.</strong></p>
+                        
+                        <h3 style="color:var(--color-safe)">Acceptable Signals</h3>
+                        <ul style="font-size:0.9rem;">
+                            <li>Public channel message frequency.</li>
+                            <li>Reaction clustering and upvote density.</li>
+                            <li>High-level time-of-day activity variance.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-risk); padding: 16px; border-radius: 8px;">
+                            <h3 style="color:var(--color-risk); margin-top:0;">Hard Restrictions</h3>
+                            <ul style="font-size:0.9rem; margin-bottom:0;">
+                                <li><strong>No Keystroke Logging:</strong> Client-side typing speeds cannot and should not be captured.</li>
+                                <li><strong>No Private Data:</strong> DM tracking and IP device fingerprinting are completely out of scope.</li>
+                                <li><strong>Data Minimization:</strong> Message contents are hashed or dropped immediately after semantic evaluation.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>05. Anti-Abuse &amp; Security System</span>
+                <span>Slide 29 of 40</span>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div>
+                <h1>Human Governance Layer</h1>
+                <h2>Balancing Algorithmic Output with Empathy</h2>
+                <div class="content-grid">
+                    <div style="background: rgba(14, 165, 233, 0.05); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h3 style="color: var(--color-logic); margin-top: 0; text-align: center;">Algorithmic Layer</h3>
+                        <ul style="font-size: 0.9rem;">
+                            <li>Automated metric tracking</li>
+                            <li>Pattern &amp; graph analysis</li>
+                            <li>Eligibility gating</li>
+                            <li>Stochastic audit routing</li>
+                        </ul>
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.05); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h3 style="color: var(--color-accent); margin-top: 0; text-align: center;">Human Layer</h3>
+                        <ul style="font-size: 0.9rem;">
+                            <li><strong>Mentorship Culture:</strong> Onboarding, coaching, knowledge transfer.</li>
+                            <li><strong>Conflict Mediation:</strong> Handling nuance, interpersonal disputes, context.</li>
+                            <li><strong>Exception Handling:</strong> Knowing when algorithms must defer to human judgment.</li>
+                            <li><strong>Community Health:</strong> Evaluating morale, culture, and trust climate.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>05. Anti-Abuse &amp; Security System</span>
+                <span>Slide 30 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide" style="border-color: #7f1d1d; background: linear-gradient(135deg, rgba(24, 24, 27, 0.95), rgba(69, 10, 10, 0.3));">
+            <div>
+                <h1 style="background: none; -webkit-text-fill-color: var(--color-risk); color: var(--color-risk);">🧨 System Stress Test (Red Team)</h1>
+                <h2 style="color: #FCA5A5;">Adversarial Modeling &amp; Boundary Analysis</h2>
+                <div class="content-grid">
+                    <div>
+                        <p><strong>Testing platform infrastructure against coordinated optimization exploits.</strong></p>
+                        <p>This section outlines model tracking against common vulnerability profiles deployed to isolate weaknesses or capture role positions inside decentralized networks.</p>
+                    </div>
+                    <pre style="border-color: #7f1d1d; color: #FCA5A5;">
+[RED TEAM PENETRATION LOGS]
+> Solo_Farming_Spike : HALTED (Semantic_Block)
+> Cartel_Formation   : REROUTED (Shadow_Sandbox)
+> Identity_Laundering: DETECTED (Recursive_Decay)
+> Shadow_Sys_Gaming  : NEUTRALIZED (No_Feedback_Loop)
+> STATUS             : EXPLOIT PROFILE SECURE</pre>
+                </div>
+            </div>
+            <div class="slide-footer" style="color: #FCA5A5; border-top-color: #7f1d1d;">
+                <span>06. Red Team Simulation</span>
+                <span>Slide 31 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Attack vs. Defense Matrix</h1>
+                <h2>Vulnerability Resolution Profile</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Attack Configuration</th>
+                                <th>Exploit Method</th>
+                                <th>Legacy Structural Gap</th>
+                                <th>Hardened V2+ System Defense</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>1. Solo Farming Attack</strong></td>
+                                <td>Scripted automated posts &amp; reaction loops</td>
+                                <td>Count rules accept performance spikes</td>
+                                <td><span style="color:var(--color-safe)">Semantic Engine</span> filters content utility profiles</td>
+                            </tr>
+                            <tr>
+                                <td><strong>2. Vote Cartel Formation</strong></td>
+                                <td>Coordinated rings voting members up</td>
+                                <td>Isolated tracking misses system structures</td>
+                                <td><span style="color:var(--color-safe)">Graph Clustering Engines</span> isolate loop profiles</td>
+                            </tr>
+                            <tr>
+                                <td><strong>3. Mentor Capture Plan</strong></td>
+                                <td>Infiltrating management tiers to alter gates</td>
+                                <td>Single validators hold gate override control</td>
+                                <td><span style="color:var(--color-safe)">Stochastic Audit Routing</span> forces peer checks</td>
+                            </tr>
+                            <tr>
+                                <td><strong>4. Reputation Laundering</strong></td>
+                                <td>Routing scoring vectors through alts</td>
+                                <td>Evaluates direct paths only</td>
+                                <td><span style="color:var(--color-safe)">Recursive Decay Engines</span> drop multi-hop transfers</td>
+                            </tr>
+                            <tr>
+                                <td><strong>5. Stat Inflation Exploit</strong></td>
+                                <td>Optimizing phrasing/patterns for bot rewards</td>
+                                <td>Fixed rules allow attackers to find blind spots</td>
+                                <td><span style="color:var(--color-safe)">Dynamic Normalization</span> shifts targeting thresholds</td>
+                            </tr>
+                            <tr>
+                                <td><strong>6. Shadow System Gaming</strong></td>
+                                <td>Probing penalty boundaries for max safe limits</td>
+                                <td>Visible feedback allows safe testing of limits</td>
+                                <td><span style="color:var(--color-safe)">Shadow Risk Tier</span> provides zero feedback; run blind</td>
+                            </tr>
+                            <tr>
+                                <td><strong>7. Strategic Silence Attack</strong></td>
+                                <td>Avoids public posts, manipulates vote trust networks privately</td>
+                                <td>Hidden backroom influence goes unpunished</td>
+                                <td><span style="color:var(--color-safe)">Time-decay</span> enforces public contribution requirements</td>
+                            </tr>
+                            <tr>
+                                <td><strong>8. Reputation Hostage</strong></td>
+                                <td>High-status actors pressure voting blocs for capture</td>
+                                <td>Social hierarchy overrides rules</td>
+                                <td><span style="color:var(--color-safe)">Stochastic Audits</span> anonymize performance checks</td>
+                            </tr>
+                            <tr>
+                                <td><strong>9. Metric Poisoning</strong></td>
+                                <td>Intentional distortion of semantic scoring signals</td>
+                                <td>Static AI relies on fixed dictionaries</td>
+                                <td><span style="color:var(--color-safe)">Variance Scoring</span> flags anomalous vocabulary shifts</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>06. Red Team Simulation</span>
+                <span>Slide 32 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Failure Analysis Summary</h1>
+                <h2>Exploit Traversal and Structural Improvements</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>The Vulnerability of Predictable Limits</h3>
+                        <p>Standard platforms remain vulnerable because they deploy static benchmarks. When a role requires an absolute point score, threat groups deploy automated sequences to match targets, parking configurations until activation timelines trigger.</p>
+                        <h3>The Hardened Relational Architecture</h3>
+                        <p>V2+ mitigates this vector by shifting tracking focus away from raw metric volume out to network structural placement. Exploits cannot scale unless profiles establish months of validated community interactions to generate core trust vectors.</p>
+                    </div>
+                    <div class="diagram-container">
+                        <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
+                            <circle cx="50" cy="50" r="14" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                            <text x="50" y="54" fill="#EF4444" font-size="8" text-anchor="middle" font-family="sans-serif">Alt A</text>
+                            <circle cx="150" cy="50" r="14" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                            <text x="150" y="54" fill="#EF4444" font-size="8" text-anchor="middle" font-family="sans-serif">Alt B</text>
+                            <circle cx="100" cy="140" r="14" fill="#18181B" stroke="#EF4444" stroke-width="1.5"/>
+                            <text x="100" y="144" fill="#EF4444" font-size="8" text-anchor="middle" font-family="sans-serif">Alt C</text>
+                            <path d="M 64 50 L 136 50" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 0.5s;"/>
+                            <path d="M 140 62 L 110 128" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 1.0s;"/>
+                            <path d="M 90 128 L 60 62" stroke="#EF4444" stroke-width="1.5" class="flow-line" style="animation-delay: 1.5s;"/>
+                            
+                            <g class="alert-node">
+                                <rect x="30" y="88" width="140" height="22" rx="4" fill="rgba(239, 68, 68, 0.15)" stroke="#EF4444" stroke-width="1"/>
+                                <text x="100" y="101" fill="#EF4444" font-size="8" text-anchor="middle" font-weight="bold" font-family="sans-serif">RING ISOLATION ACTIVE</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>06. Red Team Simulation</span>
+                <span>Slide 33 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Goodhart’s Law Metric Analysis</h1>
+                <h2>Deconstructing Systemic Target Distortion</h2>
+                <blockquote>
+                    <p style="font-style: italic; color: #E4E4E7; font-size: 1.15rem; margin: 0;">
+                        “When a metric becomes a target, it stops being a good metric.”
+                    </p>
+                </blockquote>
+                <div class="content-grid">
+                    <div>
+                        <p>Exposing fine-grained point variables causes community interaction profiles to shift from authentic utility over to systematic grinding:</p>
+                        <ul>
+                            <li><strong>Helpfulness</strong> tracks downward into boilerplate copypasta spam.</li>
+                            <li><strong>Consistency</strong> shifts into script-driven server ping behaviors.</li>
+                            <li><strong>Voting</strong> maps onto transactional relationship networks.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>The Protective Gating Guardrails</h3>
+                        <p>The platform separates feedback interfaces from system point indices. Active metrics (M<sub>r</sub>, C<sub>r</sub>) write silently backend. Checked parameters track along sliding scales modified by user group base deviations, making explicit value gaming signatures highly trackable.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>06. Red Team Simulation</span>
+                <span>Slide 34 of 40</span>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <div>
+                <h1>Operational Cost &amp; Complexity Profile</h1>
+                <h2>Architectural Tradeoff Analysis</h2>
+                <div class="content-grid">
+                    <div class="table-wrapper" style="margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Cost</th>
+                                    <th>Complexity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Semantic Scoring</td><td style="color:var(--color-risk)">High</td><td style="color:var(--color-risk)">High</td></tr>
+                                <tr><td>Graph Analytics</td><td style="color:var(--color-prov)">Medium-High</td><td style="color:var(--color-risk)">High</td></tr>
+                                <tr><td>Stochastic Audits</td><td style="color:var(--color-logic)">Human Intensive</td><td style="color:var(--color-prov)">Medium</td></tr>
+                                <tr><td>Threshold Tuning</td><td style="color:var(--color-accent)">Continuous</td><td style="color:var(--color-prov)">Medium</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h3>Tradeoff Analysis</h3>
+                        <p><strong>Benefits Achieved:</strong></p>
+                        <ul>
+                            <li>Deep sybil and abuse resistance.</li>
+                            <li>Adaptive trust architectures that scale.</li>
+                        </ul>
+                        <p><strong>Operational Costs:</strong></p>
+                        <ul>
+                            <li>High moderation overhead for manual audits.</li>
+                            <li>Continuous burden of algorithmic threshold tuning.</li>
+                            <li>High computational complexity for graph traversals.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>07. Evolution &amp; Orchestration</span>
+                <span>Slide 35 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>System Evolution Roadmap</h1>
+                <h2>Iterative Platform Hardening Philosophy</h2>
+                <div class="content-grid" style="margin-top: 24px;">
+                    <div>
+                        <h3>V1 Architecture Engine</h3>
+                        <p>Built tracking models using raw activity logs and manual staff review paths. Easily captured by foundational script setups and targeted community voting rings.</p>
+                        <h3>V2 Architecture Engine</h3>
+                        <p>Deployed basic graph validation checkers to block immediate multi-account voting loops. Integrated baseline keyword validation blocks.</p>
+                    </div>
+                    <div>
+                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--color-safe); padding: 16px; border-radius: 8px;">
+                            <h3 style="color: var(--color-safe); margin-top: 0;">Hardened V2+ Architecture <span class="badge badge-safe">Active Configuration</span></h3>
+                            <p style="margin-bottom: 0;">Implements multi-layered <strong>Trust Confidence (T<sub>c</sub>) Calibration</strong>, semantic context monitoring, blind stochastic auditing, and client telemetry performance fingerprinting to decouple points from programmatic role validation paths.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>07. Evolution &amp; Orchestration</span>
+                <span>Slide 36 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Dashboard Design Console UI</h1>
+                <h2>Administrative Real-time Management Node Layout</h2>
+                <pre>
+================================================================================
+[ KARMA RPG GOVERNANCE CONSOLE ]                     | OPERATIONS STATUS: SHADOW DEPLOYMENT 
+================================================================================
+(1) NETWORK HEALTH STATUS  [STABLE 🟢]                 (2) FLAG ALERTS
+    • Total Active Nodes: 14,205                       • Collusion Triggers: 2
+    • Global Decay Scalar: 0.982                       • Anomalous Variance: 1
+    • System-Wide Inflation: 0.02%                     • Active Shadow Tiers: 14
+--------------------------------------------------------------------------------
+(3) PROMOTION EVALUATION QUEUE (PENDING STOCHASTIC AUDIT)
+    User Identity: @CryptoDev_0x
+    Raw Metrics  : [K: 612] [H: 520] [V: 98] [C: 84] [J: 89]
+    Risk Index   : Tc: 0.91 🟢  Mr: 0.02 🟢  Cr: 0.01 🟢
+    Status       : Graph validation passed. Awaiting multi-sig audit pool vote.
+--------------------------------------------------------------------------------
+(4) SYSTEM ACTION LIVE FEED
+    [11:32:01] 🟡 Alert: User @FarmingBot_99 triggered Diversity Filter (Cap Hit).
+    [11:34:12] 🔴 Warning: Cluster Alpha (4 nodes) flagged for Reciprocal Loop.
+================================================================================</pre>
+            </div>
+            <div class="slide-footer">
+                <span>07. Evolution &amp; Orchestration</span>
+                <span>Slide 37 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Real-World Adoption Strategy</h1>
+                <h2>The Community Rollout Playbook</h2>
+                <div class="content-grid">
+                    <div>
+                        <p>How an existing Discord server introduces algorithmic governance safely without triggering user backlash or staff confusion.</p>
+                        <ul style="font-size: 0.9rem;">
+                            <li><strong>Phase A (Manual Governance):</strong> Business as usual. Prep the community with a clear communication plan regarding upcoming changes.</li>
+                            <li><strong>Phase B (Shadow Analytics):</strong> The bot ingests data silently. Train Moderators on the new Admin Dashboard to review hidden data.</li>
+                            <li><strong>Phase C (Recommendation Engine):</strong> Bot outputs "Audit Recommendations" to staff. Mentors test the UI and provide feedback loop data.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <ul style="font-size: 0.9rem;">
+                            <li><strong>Phase D (Hybrid Governance):</strong> Public stats go live. Community members must meet visual metric thresholds, but a human ultimately clicks "Promote."</li>
+                            <li><strong>Phase E (Limited Automation):</strong> Tightly constrained, fully automated progression unlocks for lower-risk tiers (e.g., User to Provisional Helper). Higher tiers retain multi-sig review.</li>
+                        </ul>
+                        <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid var(--color-prov); padding: 12px; margin-top: 16px;">
+                            <strong style="color:var(--color-prov)">Crucial Requirement: Mentor Onboarding</strong><br>
+                            <span style="font-size: 0.85rem; color: var(--text-muted)">The system fails if current staff do not understand how to read the Decision Transparency Layer. Dedicated training sessions are mandatory before Phase C.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>08. Orchestration &amp; Launch</span>
+                <span>Slide 38 of 40</span>
+            </div>
+        </div>
+        
+        <div class="slide" style="border-color: var(--color-risk);">
+            <div>
+                <h1 style="background: none; -webkit-text-fill-color: var(--color-risk); color: var(--color-risk);">What This System Cannot Guarantee</h1>
+                <h2 style="color: var(--text-muted);">A Realistic Security Posture</h2>
+                <div class="content-grid">
+                    <div>
+                        <ul style="font-size: 1.1rem; line-height: 1.8;">
+                            <li><strong>No Perfect Fairness:</strong> Automated gating will occasionally delay genuine contributors.</li>
+                            <li><strong>No Perfect Truth:</strong> Semantic scoring approximates value; it does not possess ultimate domain knowledge.</li>
+                            <li><strong>False Positives:</strong> The Shadow Risk Tier will inevitably flag unusual but benign activity.</li>
+                            <li><strong>Politics Remain:</strong> Human bias cannot be entirely eliminated from the Weighted Voting System.</li>
+                            <li><strong>Incentive Distortion:</strong> Users will always attempt to optimize their behavior for the metrics provided.</li>
+                        </ul>
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; background: rgba(24, 24, 27, 0.8); border-left: 4px solid var(--color-risk); padding: 24px; border-radius: 8px;">
+                        <h3 style="margin-top: 0; color: var(--text-main);">Our Ultimate Goal</h3>
+                        <p style="font-size: 1.1rem;">The objective is to <strong>reduce the probability of systemic governance failure</strong> and sybil collapse, NOT to create a flawless, omniscient engine of automated justice.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>End of Specifications Document</span>
+                <span>Slide 39 of 40</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div>
+                <h1>Closing Technical Highlights</h1>
+                <h2>Architectural Operational Summary</h2>
+                <div class="content-grid" style="margin-top: 32px;">
+                    <div>
+                        <p>The Hardened V2+ platform changes standard reactive community moderation into a proactive infrastructure model.</p>
+                        <ul>
+                            <li><strong>Systemic Alignment:</strong> Linking capability profiles directly to graph-validated <strong>Effective Stats</strong> builds engagement habits around long-term value creation.</li>
+                            <li><strong>Defensive Core:</strong> Automated screening gates (Shadow Quarantine, Multi-Sig Calibration Constraints) shield structural logic channels from vector penetration actions.</li>
+                        </ul>
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid var(--color-safe); padding: 32px; border-radius: 12px; background: rgba(16, 185, 129, 0.05); box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);">
+                        <span style="color: var(--color-safe); font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;">ARCHITECTURE OPERATIONAL</span>
+                        <span style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">Ecosystem Integrity Seal Active &amp; Validated</span>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>End of Specifications Document</span>
+                <span>Slide 40 of 40</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="controls-bar">
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div class="control-group">
+            <button class="btn" id="prev-btn" aria-label="Previous Slide">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> 
+                Prev
+            </button>
+        </div>
+        
+        <div class="control-group">
+            <button class="btn btn-play" id="play-btn" aria-label="Auto-Play Presentation">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Auto-Play
+            </button>
+            
+            <select id="slide-jump" class="slide-select" aria-label="Jump to slide"></select>
+        </div>
+
+        <div class="control-group">
+            <button class="btn" id="next-btn" aria-label="Next Slide">
+                Next 
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Slide Navigation Logic
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const slideJump = document.getElementById('slide-jump');
+        
+        let currentSlideIdx = 0;
+        let isPlaying = false;
+        let slideInterval;
+
+        // Populate Slide Jump Dropdown
+        slides.forEach((_, idx) => {
+            const option = document.createElement('option');
+            option.value = idx;
+            option.textContent = `Slide ${String(idx + 1).padStart(2, '0')} / ${slides.length}`;
+            slideJump.appendChild(option);
+        });
+
+        // Trigger on Dropdown Change
+        slideJump.addEventListener('change', (e) => {
+            currentSlideIdx = parseInt(e.target.value, 10);
+            updateSlideDisplay();
+            stopAutoPlay();
+        });
+
+        function updateSlideDisplay() {
+            // Re-trigger CSS animations by cloning and replacing slide
+            slides.forEach((slide, idx) => {
+                if(idx === currentSlideIdx) {
+                    slide.classList.remove('active');
+                    void slide.offsetWidth; // Trigger reflow
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            
+            // Sync Dropdown and Progress Bar
+            slideJump.value = currentSlideIdx;
+            progressBar.style.width = `${((currentSlideIdx + 1) / slides.length) * 100}%`;
+            
+            // Scroll to top for small screens
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentSlideIdx > 0) { currentSlideIdx--; updateSlideDisplay(); }
+            stopAutoPlay();
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentSlideIdx < slides.length - 1) { currentSlideIdx++; updateSlideDisplay(); }
+            stopAutoPlay();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                if (currentSlideIdx < slides.length - 1) { currentSlideIdx++; updateSlideDisplay(); }
+                stopAutoPlay();
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlideIdx > 0) { currentSlideIdx--; updateSlideDisplay(); }
+                stopAutoPlay();
+            }
+        });
+
+        // Auto-Play Technical Presentation Logic
+        const playBtn = document.getElementById('play-btn');
+        playBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        });
+
+        function startAutoPlay() {
+            isPlaying = true;
+            playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> Pause';
+            playBtn.style.backgroundColor = '#F59E0B';
+            playBtn.style.borderColor = '#F59E0B';
+            slideInterval = setInterval(() => {
+                if (currentSlideIdx < slides.length - 1) {
+                    currentSlideIdx++;
+                    updateSlideDisplay();
+                } else {
+                    stopAutoPlay(); // Stop when end is reached
+                }
+            }, 4500); // 4.5 seconds per slide
+        }
+
+        function stopAutoPlay() {
+            isPlaying = false;
+            clearInterval(slideInterval);
+            playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Auto-Play';
+            playBtn.style.backgroundColor = 'var(--color-safe)';
+            playBtn.style.borderColor = 'var(--color-safe)';
+        }
+
+        // Technical Code Simulation with Loaders
+        const runBtn = document.getElementById('run-pipeline-btn');
+        const logOutput = document.getElementById('sim-log');
+        
+        if(runBtn) {
+            runBtn.addEventListener('click', async () => {
+                runBtn.disabled = true;
+                logOutput.innerHTML = '<div style="margin-bottom: 8px;"><div class="loader"></div> <span style="color:#A1A1AA">Initializing pipeline sequence...</span></div>';
+                
+                const steps = [
+                    { msg: "> Init: Fetching user vector data...", color: "#FAFAFA", delay: 600 },
+                    { msg: "> [1/5] Eligibility Gate: Vector metrics OK [Effective Stat: 712]", color: "#10B981", delay: 800 },
+                    { msg: "> [2/5] Graph Scan: Analyzing 2nd-degree connections...", color: "#FAFAFA", delay: 1000 },
+                    { msg: "> [2/5] Graph Scan: No reciprocal loops found. Cr = 0.02", color: "#10B981", delay: 700 },
+                    { msg: "> [3/5] Audit: Selecting 50 random records... PASS", color: "#10B981", delay: 600 },
+                    { msg: "> [4/5] Voting Mix: Weight assigned 4.2x based on Mentor Tc.", color: "#0EA5E9", delay: 800 },
+                    { msg: ">> PIPELINE SUCCESS. Role assigned: HELPER.", color: "#8B5CF6", delay: 500 }
+                ];
+
+                for (let i = 0; i < steps.length; i++) {
+                    await new Promise(r => setTimeout(r, steps[i].delay));
+                    
+                    const loaders = logOutput.querySelectorAll('.loader');
+                    loaders.forEach(l => l.remove());
+                    
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    entry.style.color = steps[i].color;
+                    
+                    if (i < steps.length - 1) {
+                        entry.innerHTML = `<div class="loader"></div> ${steps[i].msg}`;
+                    } else {
+                        entry.innerHTML = `<strong>${steps[i].msg}</strong>`;
+                    }
+                    
+                    logOutput.appendChild(entry);
+                }
+                
+                setTimeout(() => { runBtn.disabled = false; runBtn.innerHTML = "Re-Run Script"; }, 1000);
+            });
+        }
+
+        updateSlideDisplay();
+    </script>
+</body>
+</html>
